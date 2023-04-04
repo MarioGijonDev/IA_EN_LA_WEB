@@ -1,0 +1,148 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Finger Counting</title>
+
+    <style>
+    	#video, #videoC2 {
+    		transform: rotateY(180deg);
+    		-webkit-transform:rotateY(180deg); /* Safari and Chrome */
+    		-moz-transform:rotateY(180deg); /* Firefox */
+    		
+    	}
+        #canvas, #canvasC2{
+            display: none;
+        }
+    </style>
+    
+     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.4/socket.io.js"></script>
+</head>
+
+<body>
+    
+    <h1>Painter</h1>
+
+    <div id="container">
+        <video autoplay playsinline id="videoElement" style="display: none;"></video>
+        <canvas id="canvas"  width="1280" height="720"></canvas>
+    </div>
+
+    <div class = "video">
+        <img id="photo"  width="1280"  height="720">
+    </div>
+
+    <!-- <div id="containerC2">
+        <video autoplay playsinline id="videoElementC2" style="display: none;"></video>
+        <canvas id="canvasC2"  width="1280" height="720"></canvas>
+    </div>
+
+    <div class = "video">
+        <img id="photoC2"  width="1280"  height="720">
+    </div> -->
+    
+    <script type="text/javascript" charset="utf-8">
+
+        console.log(window.location.protocol + '//' + document.domain + ':' + location.port);
+      
+        var socket = io.connect(window.location.protocol + '//' + document.domain + ':' + location.port);
+        
+        socket.on('connect', function(){
+            console.log("Connected...!", socket.connected)
+        });
+
+
+        var canvas = document.getElementById('canvas');
+        var context = canvas.getContext('2d');
+        const video = document.querySelector("#videoElement");
+
+        //////////////////////////////////////////
+        /* var canvasC2 = document.getElementById('canvasC2');
+        var contextC2 = canvasC2.getContext('2d');
+        const videoC2 = document.querySelector("#videoElementC2"); */
+
+        video.width = 1280;
+        video.height = 720;
+
+        ////////////////////////////////////////
+        /* videoC2.width = 1280;
+        videoC2.height = 720;  */
+
+        if (navigator.mediaDevices.getUserMedia) {
+            navigator.mediaDevices.getUserMedia({ video: true })
+            .then(function (stream) {
+                video.srcObject = stream;
+                video.play();
+            })
+            .catch(function (error) {
+
+            });
+        }
+
+        const FPS = 12;
+        setInterval(() => {
+            width=video.width;
+            height=video.height;
+            context.drawImage(video, 0, 0, width , height );
+            var data = canvas.toDataURL('image/jpeg', 0.5);
+            context.clearRect(0, 0, width,height );
+
+            
+            socket.emit('image-painter', {'image':data, 'headerImage': readCookie('headerImage'), 'lineDrawed': [readCookie('xp'), readCookie('yp')]});
+        }, 1000/FPS);
+
+        socket.on('response_back', function(image){
+            photo.setAttribute('src', image );
+        });
+
+        /* socket.on('response_back_c2', function(image){
+            photoC2.setAttribute('src', image );
+        }); */
+
+        socket.on('headerImage', function(color){
+            document.cookie = `headerImage=${color}`
+        })
+
+        socket.on('lineDrawed', function([xp, yp]){
+            document.cookie = `xp=${xp}`
+            document.cookie = `yp=${yp}`;
+        })
+
+        
+
+        function readCookie(name) {
+
+            var nameEQ = name + "="; 
+            var ca = document.cookie.split(';');
+
+            for(var i=0;i < ca.length;i++) {
+
+                var c = ca[i];
+                while (c.charAt(0)==' ') c = c.substring(1,c.length);
+                    if (c.indexOf(nameEQ) == 0) {
+                        return decodeURIComponent( c.substring(nameEQ.length,c.length) );
+                    }
+
+                }
+
+            return null;
+
+        }
+
+        function eliminarCookies() {
+            document.cookie.split(";").forEach(function(c) {
+            document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+            });
+        }
+        
+
+    </script>
+    
+
+
+ </body>
+
+</html>
+
