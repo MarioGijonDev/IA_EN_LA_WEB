@@ -5,12 +5,15 @@ import pyScripts.FingerCounting as fc
 import pyScripts.VolumeHandControl as vhc
 import pyScripts.VirtualPainter as vp
 import pyScripts.Prs as prs
+from flask_cors import CORS, cross_origin
 
 app = Flask(__name__)
+CORS(app, supports_credentials=True)
 socketio = SocketIO(app,cors_allowed_origins='*')
 
 # Índice ##############################################
 @app.route('/', methods=['POST', 'GET'])
+@cross_origin(supports_credentials=True)
 def index():
     return render_template('index.html')
 
