@@ -5,17 +5,7 @@
     <meta charset="UTF-8">
     <title>Finger Counting</title>
 
-    <style>
-    	#video {
-    		transform: rotateY(180deg);
-    		-webkit-transform:rotateY(180deg); /* Safari and Chrome */
-    		-moz-transform:rotateY(180deg); /* Firefox */
-    		
-    	}
-        #canvas{
-            display: none;
-        }
-    </style>
+    <link rel="stylesheet" href="static/tool.css">
     
      <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
      <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.4/socket.io.js"></script>
@@ -69,7 +59,7 @@
             width=video.width;
             height=video.height;
             context.drawImage(video, 0, 0, width , height );
-            var data = canvas.toDataURL('image/jpeg', 0.5);
+            const data = canvas.toDataURL('image/jpeg', 0.3);
             context.clearRect(0, 0, width,height );
 
             socket.emit('image-finger-counting', data);

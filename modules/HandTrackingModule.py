@@ -47,7 +47,7 @@ class HandDetector():
         if self.results.multi_hand_landmarks:
             #Obtener el resultado de un punto definido
             myHand = self.results.multi_hand_landmarks[handNo]
-            #Recorremos el rsultado de ese punto
+            #Recorremos el resultado de ese punto
             for id, lm in enumerate(myHand.landmark):
                 #Obtenemos el shape (información del punto)
                 h, w, c = img.shape

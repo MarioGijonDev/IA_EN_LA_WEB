@@ -23,12 +23,9 @@ def readb64(base64_string):
 def main(data_image):
   frame = (readb64(data_image))
 
-  """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-
   #Detecta las manos de las imagenes
   frame = detector.findHands(frame)
 
-  """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
   imgencode = cv2.imencode('.jpeg', frame,[cv2.IMWRITE_JPEG_QUALITY,40])[1]
 
   # base64 encode

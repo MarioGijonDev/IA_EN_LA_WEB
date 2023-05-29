@@ -1,26 +1,185 @@
-
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Inicio</title>
     <link rel="stylesheet" href="../static/index/style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.4/socket.io.js"></script>
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700" rel="stylesheet">
+    <link rel="stylesheet" href="static/index.css">
 </head>
-<body>
-    <h1>Inicio</h1>
-    
-    <nav>
-        <ul>
-            <li><a href="test">Test</a></li>
-            <hr>
-            <li><a href="finger">Finger Counting</a></li>
-            <li><a href="volume">Volume Hand Control</a></li>
-            <li><a href="painter">Virtual Painter</a></li>
-            <li><a href="prs">Paper Rock Scissors</a></li>
-        </ul>
-    </nav>
-    
- </body>
-</html>
 
+<body id="body">
+  <header>
+    <h1>Esto es el titulo</h1>
+  </header>
+  <article id="cards-container">
+    <div class="card">
+      <div class="card2">
+        <h2>Test</h2>
+        <p>A simple hand tracking to verify functionality.</p>
+        <button class="btn" onclick="window.open('/test')" type="button">
+          <strong>Go into</strong>
+          <div id="container-stars">
+            <div id="stars"></div>
+          </div>
+          <div id="glow">
+            <div class="circle"></div>
+            <div class="circle"></div>
+          </div>
+        </button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card2">
+        <h2>Finger count</h2>
+        <p>Control the number of fingers oriented towards the camera</p>
+        <button class="btn" onclick="window.open('/finger')" type="button">
+          <strong>Go into</strong>
+          <div id="container-stars">
+            <div id="stars"></div>
+          </div>
+          <div id="glow">
+            <div class="circle"></div>
+            <div class="circle"></div>
+          </div>
+        </button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card2">
+        <h2>Volume control</h2>
+        <p>Control the volume of your Linux device (Windows coming soon)</p>
+        <button class="btn" onclick="window.open('/volume')" type="button">
+          <strong>Go into</strong>
+          <div id="container-stars">
+            <div id="stars"></div>
+          </div>
+          <div id="glow">
+            <div class="circle"></div>
+            <div class="circle"></div>
+          </div>
+        </button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card2">
+        <h2>Remote painter</h2>
+        <p>Create amazing drawings with your hands without touching the device</p>
+        <button class="btn" onclick="window.open('/painter')" type="button">
+          <strong>Go into</strong>
+          <div id="container-stars">
+            <div id="stars"></div>
+          </div>
+          <div id="glow">
+            <div class="circle"></div>
+            <div class="circle"></div>
+          </div>
+        </button>
+      </div>
+    </div>
+    <div class="card disabled">
+      <div class="card2">
+        <h2>Rock Paper Scissors</h2>
+        <p>Play the legendary game of Rock Paper Scissors with this incredible feature</p>
+        <button class="btn" onclick="alert('I said not yet, it\'s almost finished')" type="button">
+          <strong>Go into</strong>
+          <div id="container-stars">
+            <div id="stars"></div>
+          </div>
+          <div id="glow">
+            <div class="circle"></div>
+            <div class="circle"></div>
+          </div>
+        </button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card2 disabled">
+        <h2>Interactive calculator</h2>
+        <p>Math has never been so fun... or has it...</p>
+        <button class="btn" onclick="alert('I said not yet, it\'s almost finished')" type="button">
+          <strong>Go into</strong>
+          <div id="container-stars">
+            <div id="stars"></div>
+          </div>
+          <div id="glow">
+            <div class="circle"></div>
+            <div class="circle"></div>
+          </div>
+        </button>
+      </div>
+    </div>
+  <article>
+
+  <script>
+      const checkLoginApi = async () => {
+          try {
+
+              const resToken = await fetch('http://localhost:3000/api/v1/auth/refresh', {
+                  method: 'GET',
+                  credentials: 'include'
+              })
+
+              const { token } = await resToken.json()
+
+              const res = await fetch('http://localhost:3000/api/v1/auth/protected', {
+                  method: 'GET',
+                  headers: {
+                      'Content-Type': 'application/json',
+                      Authorization: `Bearer ${token}`
+                  }
+              })
+
+              const data = await res.json()
+
+              return data
+
+          } catch (e) {
+
+              console.log(e)
+
+          }
+      }
+
+      checkLoginApi().then(response => {
+          if (response.status === 'bad')
+              document.getElementById('body').innerHTML =
+              `
+                <h1>You are not loggin in</h1>
+                <section class="portfolio-experiment">
+                <a href="http://localhost:5173/">
+                  <span class="text">Get log in for free</span>
+                  <span class="line -right"></span>
+                  <span class="line -top"></span>
+                  <span class="line -left"></span>
+                  <span class="line -bottom"></span>
+                </a>
+              </section>
+              `
+
+          /* else
+              document.getElementById('body').innerHTML = 
+              `
+              <h1>Inicio</h1>
+              <nav>
+                  <ul>
+                      <li><a href="test">Test</a></li>
+                      <hr>
+                      <li><a href="finger">Finger Counting</a></li>
+                      <li><a href="volume">Volume Hand Control</a></li>
+                      <li><a href="painter">Virtual Painter</a></li>
+                      <li><a href="prs">Paper Rock Scissors</a></li>
+                  </ul>
+              </nav>
+              ` */
+
+      });
+
+
+  </script>
+
+</body>
+
+</html>
