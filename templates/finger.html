@@ -12,8 +12,6 @@
 </head>
 
 <body>
-    
-    <h1>Finger Counting</h1>
 
     <div id="container">
     <video autoplay playsinline id="videoElement" style="display: none;"></video>
@@ -54,12 +52,12 @@
             });
         }
 
-        const FPS = 12;
+        const FPS = 10;
         setInterval(() => {
             width=video.width;
             height=video.height;
             context.drawImage(video, 0, 0, width , height );
-            const data = canvas.toDataURL('image/jpeg', 0.3);
+            const data = canvas.toDataURL('image/jpeg', 0.5);
             context.clearRect(0, 0, width,height );
 
             socket.emit('image-finger-counting', data);

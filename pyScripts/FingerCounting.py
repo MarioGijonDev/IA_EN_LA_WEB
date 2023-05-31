@@ -1,25 +1,14 @@
+
 #Imports
 import modules.HandTrackingModule as htm
 import cv2
 import time
 import os
 import io
-import base64,cv2
+import cv2
 import numpy as np
-from PIL import Image
 from flask_socketio import emit
-
-def readb64(base64_string):
-    idx = base64_string.find('base64,')
-    base64_string  = base64_string[idx+7:]
-
-    sbuf = io.BytesIO()
-
-    sbuf.write(base64.b64decode(base64_string, ' /'))
-    
-    pimg = Image.open(sbuf)    
-
-    return cv2.cvtColor(np.array(pimg), cv2.COLOR_RGB2BGR)
+from utils.imageFormatting import readb64, encode64
 
 #Ruta de la carpeta de imagenes
 folderPath = "img/FingerImages"
@@ -37,135 +26,131 @@ for imPath in myList:
     #Añade las imagenes a una lista
     overlayList.append(image)
 
-#Obtenemos la instancia de la clase Hand Tracking Module
-detector = htm.HandDetector()
-
-#Puntos de los dedos de la mano
-tipIds = [4, 8, 12, 16, 20]
 
 #Almacenará el numero de dedos levantados
 totalFingers = 0
 
+# Instancia de la clase HandDetector del módulo HandTrackingModule
+detector = htm.HandDetector()
+
+# Función que ejecuta la ruta respectiva al fichero, recive una imagen del WebSocket, la procesa, y la devuelve al WebSocket
 def main(data_image):
-  frame = (readb64(data_image))
+  # Recivimos la imagen que nos manda el WebSocket
+  # Convertimos la imagen base64 a matriz de numpy válida para OpenCV
+  frame = readb64(data_image)
 
-  """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+  frame = cv2.flip(frame,1)
 
-  cTime = 0
-  pTime = 0
-  totalFingers = 0
-  
-  #Detecta las manos de las imagenes
+  # Obtenemos la altura de la imagen para dibujar la línea que separará la referencia de la mano izquierda y de la derecha
+  h, w, _ = frame.shape
+  # Marcamos el punto que describirá el inicio de la línea
+  firstPoint = (int(w/2), 0)
+  # Marcamos el punto que describirá el final de la línea
+  secondPoint = (int(w/2), h)
+  # Dibujamos la línea
+  cv2.line(frame, firstPoint, secondPoint, (255, 255, 255), 2)
+
+  # Usamos el método findHands del módulo HandTrackingModule para obtener los landmarks de la imagen
   frame = detector.findHands(frame)
 
-  #Describe la posición de cada punto neuronal
+  # Hay que tener en cuenta que findPosition2hand, comprueba primero que haya 2 manos
+  # Landmarks de la primera mano
+  # Obtenemos la posición de cada landmark
   lmList = detector.findPosition(frame, draw=False)
+  # Landmarks de la segunda mano
+  # Obtenemos la posición de cada landmark
+  lmList2 = detector.findPosition2hand(frame, draw=False)
 
-  #Comprobamos que haya detectado los puntos de la mano
+  #Comprobamos que haya detectado los landmarks de al menos una mano
   if len(lmList) != 0:
-      #Matriz que describe que numeros están arriba(1) y cuales abajo (0)
-      fingers = detector.fingersUp()
+    # Detectamos que dedos se encuentran arriba con el método fingersUp del HandTrackingModule
+    # Lista con el id de los dedos que se encuentran alzados (0 para abajo) (1 para arriba)
+    fingers, hand = detector.fingersUp(mirror=True)
 
-      #Numeros de 1 que se encuentran en la lista
-      totalFingers = fingers.count(1)
-      print(totalFingers)
-      
-      #Obtiene el ancho y alto de las imagenes del overlayList
-      #-1 para que cuando valga cero, se vaya al final de la lista
-      h, w, c = overlayList[totalFingers-1].shape
+    # Numeros de 1 que se encuentran en la lista, es decir, números de dedos que se encuentran alzados
+    totalFingers = fingers.count(1)
 
-      #Superponemos en la imagen del cv, nuestra imagen del overlayList
-      #Los corchetes nos indican la posición que va a tomar en la imagen
-      frame[0:h, 0:w] = overlayList[totalFingers-1]
-
-      #Dibuja un rectangulo con los números
-      cv2.rectangle(frame, (25, 330), (190, 520), (50, 0, 0), cv2.FILLED)
-      cv2.putText(frame, str(totalFingers), (60, 475), cv2.FONT_HERSHEY_PLAIN, 10, (255, 255, 255), 15)
-          
-      #Calcular FPS
-      cTime = time.time()
-      fps = 1/(cTime-pTime)
-      pTime = cTime
-
-      #Mostrar FPS
-      cv2.putText(frame, f'FPS: {str(int(fps))}', (15,38), cv2.FONT_HERSHEY_PLAIN, 2, (255, 0, 255), 1)
-
-  """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-  imgencode = cv2.imencode('.jpeg', frame,[cv2.IMWRITE_JPEG_QUALITY,40])[1]
-
-  # base64 encode
-  stringData = base64.b64encode(imgencode).decode('utf-8')
-  b64_src = 'data:image/jpeg;base64,'
-  stringData = b64_src + stringData
-
-  # emit the frame back
-  emit('response_back', stringData)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  
-
-""" def mainDeprecated(cap):
-    cTime = 0
-    pTime = 0
-    totalFingers = 0
+    # Comprobamos que existe landmarks de la segunda mano (o mejor dicho, que existe una segunda mano)
+    if len(lmList2) != 0:
+      # Obtenemos una lista similar a la anterior con el número de dedos alzados
+      fingers2 = detector.fingersUp2Hand(mirror=True)
+      # Si nos devuelve false, significa que no se encontraron landmarks, por lo tanto, no existe una segunda mano y el resultado es 0
+      if not fingers2: totalFingers2 = 0
+      # En caso contrario, contamos el número de 1 que se encuentran en la lista (dedos alzados)
+      else: totalFingers2 = fingers2.count(1)
+      # Almacenamos el número total de dedos de la primera mano en una variable aparte, para almacenar los dedos de la primera mano
+      # De esta manera tendremos tres referencias, dedos alzados de la primera mano, de la segunda, y la suma de ambas manos
+      totalFingers1 = totalFingers
+      # Obtenemos la cantidad total de dedos alzados de ambas manos
+      totalFingers = totalFingers1 + totalFingers2
     
-    #Detecta las manos de las imagenes
-    frame = detector.findHands(frame)
+    # Si existe totalFingers2, implica que existe una segunda mano, por lo que la disposición a la hora de dibujar las cifras cambia
+    if 'totalFingers2' in locals():
+      # Si la primera mano es la derecha:
+      if hand == 'R':
+        # Mano derecha
+        # Rectangulo y número de dedos a la derecha para la primera mano
+        cv2.rectangle(frame, (w, 0), (w-200, 200), (204, 155, 81), cv2.FILLED)
+        cv2.putText(frame, str(totalFingers1), (w-150, 155), cv2.FONT_HERSHEY_PLAIN, 10, (255, 255, 255), 15)
+        # Mano Izquierda
+        # Rectangulo y número de dedos a la izquierda para la segunda mano
+        cv2.rectangle(frame, (0, 0), (200, 200), (204, 155, 81), cv2.FILLED)
+        cv2.putText(frame, str(totalFingers2), (50, 155), cv2.FONT_HERSHEY_PLAIN, 10, (255, 255, 255), 15)
+      # Por contrario, si la primera mano es la izquierda:
+      else:
+        # Mano izquierda
+        # Rectangulo y número de dedos a la izquierda para la primera mano
+        cv2.rectangle(frame, (0, 0), (200, 200), (204, 155, 81), cv2.FILLED)
+        cv2.putText(frame, str(totalFingers1), (50, 155), cv2.FONT_HERSHEY_PLAIN, 10, (255, 255, 255), 15)
+        # Mano Derecha
+        # Rectangulo y número de dedos a la derecha para la segunda mano
+        cv2.rectangle(frame, (w, 0), (w-200, 200), (204, 155, 81), cv2.FILLED)
+        cv2.putText(frame, str(totalFingers2), (w-150, 155), cv2.FONT_HERSHEY_PLAIN, 10, (255, 255, 255), 15)
 
-    #Describe la posición de cada punto neuronal
-    lmList = detector.findPosition(frame, draw=False)
+      # Dibujamos el resultado en un rectangulo centrado y abajo de la imagen
+      # Si el número total de dedos supera 1 cifra, es decir, 10, debemos tener un rectangulo más grande para que entren 2 cifras
+      if totalFingers > 9:
+        # Dibujamos el número total de dedos en un rectangulo para 2 cifras
+        cv2.rectangle(frame, (int(w/2)-150, h), (int(w/2)+150, h-200), (204, 155, 81), cv2.FILLED)
+        cv2.putText(frame, str(totalFingers), (int(w/2)-100, h-50), cv2.FONT_HERSHEY_PLAIN, 10, (255, 255, 255), 15)
+      else:
+        # Dibujamos el número total de dedos en un rectangulo para 1 cifra
+        cv2.rectangle(frame, (int(w/2)-100, h), (int(w/2)+100, h-200), (204, 155, 81), cv2.FILLED)
+        cv2.putText(frame, str(totalFingers), (int(w/2)-50, h-50), cv2.FONT_HERSHEY_PLAIN, 10, (255, 255, 255), 15)
+    # En cambio, si no existe la variable totalFingers2, implica que solo hay una mano almacenada en el valor totalFingers directamente
+    # La suma se representará en el lado correspondiente a la mano (izq, der)
+    else:
+      # Si la mano es la derecha
+      if hand == 'R':
+        # Dibujamos el rectangulo con la cifra total de números alzados de la mano a la derecha
+        cv2.rectangle(frame, (w, 0), (w-200, 200), (204, 155, 81), cv2.FILLED)
+        cv2.putText(frame, str(totalFingers), (w-150, 155), cv2.FONT_HERSHEY_PLAIN, 10, (255, 255, 255), 15)
+      else:
+        # Dibujamos el rectangulo con la cifra total de números alzados de la mano a la izquierda
+        cv2.rectangle(frame, (0, 0), (200, 200), (204, 155, 81), cv2.FILLED)
+        cv2.putText(frame, str(totalFingers), (50, 155), cv2.FONT_HERSHEY_PLAIN, 10, (255, 255, 255), 15)
+  
+  # Codificamos la imagen en formato base64
+  processedImage = encode64(frame)
+  # Devolvemos la imagen ya procesada al WebSocket para que se muestre en el cliente
+  emit('response_back', processedImage)
 
-    #Comprobamos que haya detectado los puntos de la mano
-    if len(lmList) != 0:
-        #Matriz que describe que numeros están arriba(1) y cuales abajo (0)
-        fingers = detector.fingersUp()
 
-        #Numeros de 1 que se encuentran en la lista
-        totalFingers = fingers.count(1)
-        print(totalFingers)
-        
-        #Obtiene el ancho y alto de las imagenes del overlayList
-        #-1 para que cuando valga cero, se vaya al final de la lista
-        h, w, c = overlayList[totalFingers-1].shape
 
-        #Superponemos en la imagen del cv, nuestra imagen del overlayList
-        #Los corchetes nos indican la posición que va a tomar en la imagen
-        frame[0:h, 0:w] = overlayList[totalFingers-1]
 
-        #Dibuja un rectangulo con los números
-        cv2.rectangle(frame, (25, 330), (190, 520), (50, 0, 0), cv2.FILLED)
-        cv2.putText(frame, str(totalFingers), (60, 475), cv2.FONT_HERSHEY_PLAIN, 10, (255, 255, 255), 15)
-           
-        #Calcular FPS
-        cTime = time.time()
-        fps = 1/(cTime-pTime)
-        pTime = cTime
 
-        #Mostrar FPS
-        cv2.putText(frame, f'FPS: {str(int(fps))}', (15,38), cv2.FONT_HERSHEY_PLAIN, 2, (255, 0, 255), 1)
-        
-        #Codificar en bytes
-        suc, encode = cv2.imencode('.jpg', frame)
-        frame = encode.tobytes()
 
-        #Retornar los valores para la web
-        yield(b'--img\r\n'b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n') """
+
+
+
+
+
+
+
+
+
+
+
+
+
+

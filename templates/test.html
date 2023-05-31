@@ -12,11 +12,11 @@
 
     <div id="container">
         <video autoplay playsinline id="videoElement" style="display: none;"></video>
-        <canvas id="canvas"  width="1280" height="720"></canvas>
+        <canvas id="canvas"  width="1280" height="800"></canvas>
     </div>
 
     <div class = "video">
-        <img id="photo"  width="1280"  height="720">
+        <img id="photo"  width="1280"  height="800">
     </div>
 
     <script type="text/javascript" charset="utf-8">
@@ -31,7 +31,7 @@
         const video = document.querySelector("#videoElement");
 
         video.width = 1280;
-        video.height = 720; 
+        video.height = 800; 
 
         if (navigator.mediaDevices.getUserMedia) {
             navigator.mediaDevices.getUserMedia({ video: true })
@@ -51,7 +51,7 @@
 
             context.drawImage(video, 0, 0, width , height );
 
-            const data = canvas.toDataURL('image/jpeg', 0.3);
+            const data = canvas.toDataURL('image/jpeg', 0.1);
 
             context.clearRect(0, 0, width,height );
 

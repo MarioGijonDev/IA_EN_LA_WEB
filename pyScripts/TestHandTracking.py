@@ -1,37 +1,27 @@
 
+# IMPORTS
 from flask_socketio import emit
-import io
-from PIL import Image
-import base64,cv2
+import cv2
 import numpy as np
 import modules.HandTrackingModule as htm
+from utils.imageFormatting import readb64, encode64
 
+# Instancia de la clase HandDetector del módulo HandTrackingModule
 detector = htm.HandDetector()
 
-def readb64(base64_string):
-    idx = base64_string.find('base64,')
-    base64_string  = base64_string[idx+7:]
-
-    sbuf = io.BytesIO()
-
-    sbuf.write(base64.b64decode(base64_string, ' /'))
-    
-    pimg = Image.open(sbuf)    
-
-    return cv2.cvtColor(np.array(pimg), cv2.COLOR_RGB2BGR)
-
+# Función que ejecuta la ruta respectiva al fichero, recive una imagen del WebSocket, la procesa, y la devuelve al WebSocket
 def main(data_image):
-  frame = (readb64(data_image))
+  # Recivimos la imagen que nos manda el WebSocket
+  # Convertimos la imagen base64 a matriz de numpy válida para OpenCV
+  frame = readb64(data_image)
 
-  #Detecta las manos de las imagenes
+  # Usamos el método findHands del módulo HandTrackingModule para obtener los landmarks de la imagen
   frame = detector.findHands(frame)
 
-  imgencode = cv2.imencode('.jpeg', frame,[cv2.IMWRITE_JPEG_QUALITY,40])[1]
+  # Codificamos la imagen en formato base64
+  processedImage = encode64(frame)
 
-  # base64 encode
-  stringData = base64.b64encode(imgencode).decode('utf-8')
-  b64_src = 'data:image/jpeg;base64,'
-  stringData = b64_src + stringData
-
-  # emit the frame back
-  emit('response_back', stringData)
+  # Devolvemos la imagen ya procesada al WebSocket para que se muestre en el cliente
+  emit('response_back', processedImage)
+  
+  
