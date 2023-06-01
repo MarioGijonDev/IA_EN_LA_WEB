@@ -53,134 +53,73 @@ class HandDetector():
 					self.mpDraw.draw_landmarks(img, handLms, self.mpHands.HAND_CONNECTIONS)
 		# Devolvemos la imagen ya procesada, el resultado será la misma imagen pero con los landmarks dibujados 
 		return img
-	
+
 	# Nos devuelve una matriz con el id de cada landmark y su posición x,y respectivamente, de la primera mano
-	def findPosition(self, img, handNo = 0, draw = True):
+	def findPositionAux(self, img, handNo = [0], draw = True):
 		# Creamos una lista (acabará siendo una matriz) que almacenará todos los landmarks de la imagen
-		self.lmList = []
+		self.lmList = [[],[]]
 		# Comprobamos que se han detectados landmarks en la imagen
 		if self.results.multi_hand_landmarks:
 			# Obtenemos los landmarks de una mano (handNo = mano a definir (0 -> Primera en ser detectada))
-			myHand = self.results.multi_hand_landmarks[handNo]
-			# Iteramos sobre los landmarks de la mano
-			for id, lm in enumerate(myHand.landmark):
-				# Los landmarks están normalizados (>0 y <1), por lo que debemos multiplicarlos por el ancho y alto de la imagen respectivamente
-				# Obtenemos el tamaño de la imagen (el valor de c es el número de canales de la imagen, no nos interesa)
-				h, w, c = img.shape
-				# Obtenemos las coordenadas en pixeles no normalizados del landmark
-				cx, cy = int(lm.x*w), int(lm.y*h)
-				# Agrupamos en un array el id, cx y cy  del landmark y lo añadimos a la lista
-				#   - id: id del landmark
-				#   - cx: coordenada x del landmark
-				#   - cy: coordenada y del landmark
-				self.lmList.append([id, cx, cy])
-				# Si no queremos dibujarlo, draw será False
-				# El dibujo se genera definiendo en la imagen, las cordenadas del landmark, el tamaño del circulo, y la manera en la que se dibujará (relleno, sin rellenar...)
-				if draw:
-					cv2.circle(img, (cx, cy), 5, (255, 0, 0), cv2.FILLED)
+			for hand in handNo:
+				if hand < len(self.results.multi_hand_landmarks):
+					myHand = self.results.multi_hand_landmarks[hand]
+					# Iteramos sobre los landmarks de la mano
+					for id, lm in enumerate(myHand.landmark):
+						# Los landmarks están normalizados (>0 y <1), por lo que debemos multiplicarlos por el ancho y alto de la imagen respectivamente
+						# Obtenemos el tamaño de la imagen (el valor de c es el número de canales de la imagen, no nos interesa)
+						h, w, c = img.shape
+						# Obtenemos las coordenadas en pixeles no normalizados del landmark
+						cx, cy = int(lm.x*w), int(lm.y*h)
+						# Agrupamos en un array el id, cx y cy  del landmark y lo añadimos a la lista
+						#   - id: id del landmark
+						#   - cx: coordenada x del landmark
+						#   - cy: coordenada y del landmark
+						self.lmList[hand].append([id, cx, cy])
+						# Si no queremos dibujarlo, draw será False
+						# El dibujo se genera definiendo en la imagen, las cordenadas del landmark, el tamaño del circulo, y la manera en la que se dibujará (relleno, sin rellenar...)
+						if draw:
+							cv2.circle(img, (cx, cy), 5, (255, 0, 0), cv2.FILLED)
+						
+
 		# Devolvemos la matriz con la posición de cada landmark de la mano
 		return self.lmList
-
-	# Nos devuelve una matriz con el id de cada landmark y su posición x,y respectivamente, de la segunda mano
-	# Dentro del método, comprobamos que se encuentran 2 manos para que no haya fallos
-	def findPosition2hand(self, img, handNo = 1, draw = True):
-		self.lmList2 = []
-		# Comprobamos que se han detectados landmarks en la imagen
-		if self.results.multi_hand_landmarks:
-			# Comprobamos que se han detectado más de 1 mano
-			# La propiedad multi_hand_landmarks es una lista almacena los landmarks de cada mano por separado
-			# Si la lista tiene un valor mayor al número de la mano, implica que se encuentra la mano dentro de la lista
-			# Si no hacemos esta verificación, nos daría una excepción "Index Out Of Bounds", implica que no existe la mano
-			if handNo < len(self.results.multi_hand_landmarks):
-				# Obtenemos los landmarks de una mano (handNo = mano a definir (0 -> Primera en ser detectada))
-				myHand = self.results.multi_hand_landmarks[handNo]
-				# Iteramos sobre los landmarks de la mano
-				for id, lm in enumerate(myHand.landmark):
-					# Los landmarks están normalizados (>0 y <1), por lo que debemos multiplicarlos por el ancho y alto de la imagen respectivamente
-					# Obtenemos el tamaño de la imagen (el valor de c es el número de canales de la imagen, no nos interesa)
-					h, w, c = img.shape
-					# Obtenemos las coordenadas en pixeles no normalizados del landmark
-					cx, cy = int(lm.x*w), int(lm.y*h)
-					# Agrupamos en un array el id, cx y cy  del landmark y lo añadimos a la lista
-					#   - id: id del landmark
-					#   - cx: coordenada x del landmark
-					#   - cy: coordenada y del landmark
-					self.lmList2.append([id, cx, cy])
-					# Si no queremos dibujarlo, draw será False
-					# El dibujo se genera definiendo en la imagen, las cordenadas del landmark, el tamaño del circulo, y la manera en la que se dibujará (relleno, sin rellenar...)
-					if draw:
-							cv2.circle(img, (cx, cy), 5, (255, 0, 0), cv2.FILLED)
-			# Devolvemos la matriz con la posición de cada landmark de la mano
-		return self.lmList2
 	
 	# Devuelve una lista con los dedos que estan hacia arriba (1) y los que estan hacia abajo (0)
 	def fingersUp(self, mirror = False):
 		# Lista que almacenará la cantidad de dedos que estan arriba y la cantidad de dedos que estan abajo
+		hands = []
 		fingers = []
 
-		# Comprobamos primero si la mano se encuentra a la derecha o a la izquierda respecto a la mitad de la imagen
-		# Con esto, podemos suponer que la que se encuentra a la derecha es la mano derecha y la que se encuentra a la izquierda es la izquierda
-		# Si se encuentra a la derecha (mayor al valor intermedio en px de la imagen)
-		# Este método tiene por defecto, que la mano detectada sea la derecha
-		# Para saber la posición de la mano en la imagen, usamos el punto de referencia de la articuluación de la muñeca
-		# lmList[dedo]
-		if self.lmList[0][1] > 650:
-			# Activamos el efecto espejo (sin modo espejo, suponemos que el dedo gordo se encuentra a la izquierda y la mano sería la derecha)
-			mirror = True
-			# Definimos la mano como la derecha
-			hand = 'R'
-		else:
-			# Desactivamos el efecto espejo (con modo espejo, suponemos que el dedo gordo se encuentra a la derecha y la mano sería la izquierda)
-			mirror = False
-			# Definimos la mano como la izquierda
-			hand = 'L'
-		
-		#Dedo gordo
-		#El dedo gordo funciona respecto a la coordenada del dedo indice, por lo que si está en modo espejo deberá cambiar de > a <
-		if mirror :    
-			if self.lmList[self.tipIds[0]][1] < self.lmList[self.tipIds[0]-1][1]:
-					fingers.append(1)
+		for landmarks in self.lmList:
+			fingers = []
+			if len(landmarks) == 0: break
+			# Comprobamos primero si la mano se encuentra a la derecha o a la izquierda respecto a la mitad de la imagen
+			# Con esto, podemos suponer que la que se encuentra a la derecha es la mano derecha y la que se encuentra a la izquierda es la izquierda
+			# Si se encuentra a la derecha (mayor al valor intermedio en px de la imagen)
+			# Este método tiene por defecto, que la mano detectada sea la derecha
+			# Para saber la posición de la mano en la imagen, usamos el punto de referencia de la articuluación de la muñeca
+			# lmList[dedo]
+			if landmarks[0][1] > 650:
+				# Activamos el efecto espejo (sin modo espejo, suponemos que el dedo gordo se encuentra a la izquierda y la mano sería la derecha)
+				mirror = True
+				# Definimos la mano como la derecha
+				hand = 'R'
 			else:
-					fingers.append(0)
-		else:
-			if self.lmList[self.tipIds[0]][1] > self.lmList[self.tipIds[0]-1][1]:
-					fingers.append(1)
-			else:
-					fingers.append(0)
-		
-		#Bucle 4 vueltas, porque la posicion 1 es el dedo gordo y se pliega diferente
-		for id in range(1, 5):
-			#Si el punto 8 en el ejeY es menos que el punto 6 en el ejey de la misma mano
-			#Significa que está levantado, ya que openCV usa números negativos máx 0
-			#El menos 2 es porque hacemos la comparación con el segundo punto de debajo
-			if self.lmList[self.tipIds[id]][2] < self.lmList[self.tipIds[id]-2][2]:
-					fingers.append(1)
-			else:
-					fingers.append(0)
-
-		return [fingers, hand]
-
-	# Que dedos estan hacia arriba (1) y cuales hacia abajo (0)
-	def fingersUp2Hand(self, mirror = True):
-		#Guardar si el dedo esta subido o no
-		fingers = []
-
-		
-		if self.lmList2[0][1] > 650:
-			mirror = True
-		else:
-			mirror = False
-
-		if 1 < len(self.results.multi_hand_landmarks):
+				# Desactivamos el efecto espejo (con modo espejo, suponemos que el dedo gordo se encuentra a la derecha y la mano sería la izquierda)
+				mirror = False
+				# Definimos la mano como la izquierda
+				hand = 'L'
+			
 			#Dedo gordo
 			#El dedo gordo funciona respecto a la coordenada del dedo indice, por lo que si está en modo espejo deberá cambiar de > a <
 			if mirror :    
-				if self.lmList2[self.tipIds[0]][1] < self.lmList2[self.tipIds[0]-1][1]:
+				if landmarks[self.tipIds[0]][1] < landmarks[self.tipIds[0]-1][1]:
 						fingers.append(1)
 				else:
 						fingers.append(0)
 			else:
-				if self.lmList2[self.tipIds[0]][1] > self.lmList2[self.tipIds[0]-1][1]:
+				if landmarks[self.tipIds[0]][1] > landmarks[self.tipIds[0]-1][1]:
 						fingers.append(1)
 				else:
 						fingers.append(0)
@@ -190,10 +129,11 @@ class HandDetector():
 				#Si el punto 8 en el ejeY es menos que el punto 6 en el ejey de la misma mano
 				#Significa que está levantado, ya que openCV usa números negativos máx 0
 				#El menos 2 es porque hacemos la comparación con el segundo punto de debajo
-				if self.lmList2[self.tipIds[id]][2] < self.lmList2[self.tipIds[id]-2][2]:
+				if landmarks[self.tipIds[id]][2] < landmarks[self.tipIds[id]-2][2]:
 						fingers.append(1)
 				else:
 						fingers.append(0)
-			return fingers
-		return false
+				
+			hands.append([hand, fingers])
 
+		return hands

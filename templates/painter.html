@@ -69,12 +69,12 @@
             });
         }
 
-        const FPS = 12;
+        const FPS = 10;
         setInterval(() => {
             width=video.width;
             height=video.height;
             context.drawImage(video, 0, 0, width , height );
-            const data = canvas.toDataURL('image/jpeg', 0.3);
+            const data = canvas.toDataURL('image/jpeg', 0.1);
             context.clearRect(0, 0, width,height );
 
             

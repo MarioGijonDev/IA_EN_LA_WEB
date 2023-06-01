@@ -22,7 +22,7 @@ def readb64(base64_string):
     return cv2.cvtColor(np.array(pimg), cv2.COLOR_RGB2BGR)
 
 #Obtenemos la instancia de la clase Hand Tracking Module
-detector = htm.HandDetector(detectionCon=0.85)
+detector = htm.HandDetector(detectionCon=0.35)
 
 #Directorio donde se encuentran las imagenes de las pinturas
 folderPath = "img/PainterImages"
@@ -67,7 +67,7 @@ def main(data_image, headerImageColor, lineDrawed):
     frame = detector.findHands(frame)
 
     #Obtener datos de los dedos
-    lmList = detector.findPosition(frame)
+    lmList, _ = detector.findPositionAux(frame)
 
 
     if len(lmList) != 0 :
@@ -78,7 +78,8 @@ def main(data_image, headerImageColor, lineDrawed):
         x2, y2 = lmList[12][1:]
 
         #Recibir valores 
-        fingers = detector.fingersUp(mirror = True)
+        hands = detector.fingersUp(mirror = True)
+        _, fingers = hands[0]
 
         #Si está el dedo índice y corazón arriba, está en selection mode
         if fingers[1] and fingers[2]:
