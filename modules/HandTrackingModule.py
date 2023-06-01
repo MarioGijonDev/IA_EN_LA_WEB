@@ -28,6 +28,7 @@ class HandDetector():
 		self.mpDraw = mp.solutions.drawing_utils
 		# Índices de los landmarks que representan las puntas de los dedos (pulgar, índice, medio, anular y meñique) respectivamente
 		# Aunque no pertenezca a la clase Hands, son útiles para la realización de herramientas
+		# [pulgar, índice, medio, anular, meñique]
 		self.tipIds = [4, 8, 12, 16, 20]
 
 	# Obtiene los landmarks de las manos, y si quisieramos, los dibujaría en la imagen
@@ -85,21 +86,24 @@ class HandDetector():
 		# Devolvemos la matriz con la posición de cada landmark de la mano
 		return self.lmList
 	
-	# Devuelve una lista con los dedos que estan hacia arriba (1) y los que estan hacia abajo (0)
+	# Devuelve una lista con dos elementos, uno por cada mano, que contiene:
+	# 	Orientación de la mano (R -> Derecha)(L -> Izquierda)
+	# 	Números de dedos hacia arriba y hacia abajo (0 -> Abajo)(1 -> Arriba)
 	def fingersUp(self, mirror = False):
-		# Lista que almacenará la cantidad de dedos que estan arriba y la cantidad de dedos que estan abajo
+		# La lista que será devuelta al final de la función
 		hands = []
-		fingers = []
 
 		for landmarks in self.lmList:
+			# Lista que almacenará la cantidad de dedos que estan arriba y  abajo
 			fingers = []
+
+			# Si no se encuentran landmarks en la mano, es que no se ha detectado la mano
 			if len(landmarks) == 0: break
 			# Comprobamos primero si la mano se encuentra a la derecha o a la izquierda respecto a la mitad de la imagen
 			# Con esto, podemos suponer que la que se encuentra a la derecha es la mano derecha y la que se encuentra a la izquierda es la izquierda
-			# Si se encuentra a la derecha (mayor al valor intermedio en px de la imagen)
-			# Este método tiene por defecto, que la mano detectada sea la derecha
-			# Para saber la posición de la mano en la imagen, usamos el punto de referencia de la articuluación de la muñeca
-			# lmList[dedo]
+			# Para saber la posición de la mano en la imagen, usamos el landmark de la articuluación de la muñeca
+			# Si se encuentra a la derecha, el landmark será mayor al valor intermedio en px (650px) de la imagen
+			# landmark[idLandmark][posición en el eje x en px]
 			if landmarks[0][1] > 650:
 				# Activamos el efecto espejo (sin modo espejo, suponemos que el dedo gordo se encuentra a la izquierda y la mano sería la derecha)
 				mirror = True
@@ -111,29 +115,43 @@ class HandDetector():
 				# Definimos la mano como la izquierda
 				hand = 'L'
 			
-			#Dedo gordo
-			#El dedo gordo funciona respecto a la coordenada del dedo indice, por lo que si está en modo espejo deberá cambiar de > a <
-			if mirror :    
-				if landmarks[self.tipIds[0]][1] < landmarks[self.tipIds[0]-1][1]:
-						fingers.append(1)
-				else:
-						fingers.append(0)
-			else:
-				if landmarks[self.tipIds[0]][1] > landmarks[self.tipIds[0]-1][1]:
-						fingers.append(1)
-				else:
-						fingers.append(0)
 			
-			#Bucle 4 vueltas, porque la posicion 1 es el dedo gordo y se pliega diferente
-			for id in range(1, 5):
-				#Si el punto 8 en el ejeY es menos que el punto 6 en el ejey de la misma mano
-				#Significa que está levantado, ya que openCV usa números negativos máx 0
-				#El menos 2 es porque hacemos la comparación con el segundo punto de debajo
-				if landmarks[self.tipIds[id]][2] < landmarks[self.tipIds[id]-2][2]:
-						fingers.append(1)
+			# Dedo pulgar
+			# El dedo pulgar se aisla del resto de dos porque la manera de saber si está levantado o no es diferente
+			# Esto es porque el dedo se encuentra en horizontal y los demás en vertical, por lo que el eje a tener en cuenta es el x, no el y
+			# Si la mano es la derecha, el valor del eje x landmark de la punta del dedo debe ser menor que el del landmark de abajo para que esté alzado
+			if hand == 'R' :
+				# self.tipIds = [4, 8, 12, 16, 20] = [pulgar, índice, medio, anular, meñique]
+				# landmark[pulgar][valor eje x] < landmark[landmark debajo del landmark de la punta del pulgar][valor eje x]
+				if landmarks[self.tipIds[0]][1] < landmarks[self.tipIds[0]-1][1]:
+					# se encuentra "arriba"
+					fingers.append(1)
 				else:
-						fingers.append(0)
-				
+					# se encuentra "abajo"
+					fingers.append(0)
+			# Si la mano es la izquierda, el valor del eje x landmark de la punta del dedo debe ser mayor que el del landmark de abajo para que esté alzado
+			elif hand == 'L':
+				if landmarks[self.tipIds[0]][1] > landmarks[self.tipIds[0]-1][1]:
+					# se encuentra "arriba"
+					fingers.append(1)
+				else:
+					# se encuentra "abajo"
+					fingers.append(0)
+
+			# Para saber si un dedo se encuentra alzado o no, nos vasamos en el landmark del mismo dedo más cercano a la mano
+			# Si el landmark de la punta está por debajo del landmark más cercano al de la palma (menor valor del eje y), es que está abajo
+			# En cambio, si tiene mayor valor y, implica que está alzado, por lo que añadiriamos un 1 en vez de un 0
+			# Iteramos del 1 al 4, ya que el índice 0 es el del pulgar, y este se pliega diferente
+			for id in range(1, 5):
+				if landmarks[self.tipIds[id]][2] < landmarks[self.tipIds[id]-2][2]:
+					# se encuentra arriba
+					fingers.append(1)
+				else:
+					# se encuentra "abajo"
+					fingers.append(0)
+			
+			# Añadimos la orientación de la mano y la cantidad de números hacia arriba y abajo como una lísta
 			hands.append([hand, fingers])
 
+		# Devolvemos la lista con la información relevante de ambas manos
 		return hands

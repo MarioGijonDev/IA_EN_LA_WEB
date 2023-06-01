@@ -8,18 +8,7 @@ import io
 import base64,cv2
 from PIL import Image
 from flask_socketio import emit
-
-def readb64(base64_string):
-    idx = base64_string.find('base64,')
-    base64_string  = base64_string[idx+7:]
-
-    sbuf = io.BytesIO()
-
-    sbuf.write(base64.b64decode(base64_string, ' /'))
-    
-    pimg = Image.open(sbuf)    
-
-    return cv2.cvtColor(np.array(pimg), cv2.COLOR_RGB2BGR)
+from utils.imageFormatting import readb64, encode64
 
 #Obtenemos la instancia de la clase Hand Tracking Module
 detector = htm.HandDetector(detectionCon=0.35)
@@ -58,7 +47,7 @@ def main(data_image, headerImageColor, lineDrawed):
 
     color = headerImageColor
 
-    frame = (readb64(data_image))
+    frame = readb64(data_image)
 
     #Volteamos la imagen para simular el modo espejo
     frame = cv2.flip(frame, 1)
@@ -150,21 +139,11 @@ def main(data_image, headerImageColor, lineDrawed):
     frame = cv2.bitwise_and(frame, imgInv)
     frame = cv2.bitwise_or(frame, frameC2)
 
-    # Convertimos la imagen en formato jpeg
-    imgencode = cv2.imencode('.jpeg', frame,[cv2.IMWRITE_JPEG_QUALITY,40])[1]
-    """ imgencodeC2 = cv2.imencode('.jpeg', frameC2,[cv2.IMWRITE_JPEG_QUALITY,40])[1] """
-
-    # base64 encode frame
-    stringData = base64.b64encode(imgencode).decode('utf-8')
-    b64_src = 'data:image/jpeg;base64,'
-    stringData = b64_src + stringData
-
-    # base64 encode canvas
-    """ stringDataC2 = base64.b64encode(imgencodeC2).decode('utf-8')
-    stringDataC2 = b64_src + stringDataC2 """
+    processedImage = encode64(frame)
+    processedImageC2 = encode64(frameC2)
 
     # emit the frame back
-    emit('response_back', stringData)
+    emit('response_back', processedImage)
 
     # emit the frame back
     """ emit('response_back_c2', stringDataC2) """

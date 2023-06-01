@@ -13,17 +13,17 @@ from utils.imageFormatting import readb64, encode64
 #Ruta de la carpeta de imagenes
 folderPath = "img/FingerImages"
 
-#Lista con todos los elementos de la carpeta ordenados
+# Lista con todas las imagenes en la carpeta
 myList = sorted(os.listdir(folderPath))
 
-#Lista que contendrá las imagenes
+# Lista que contendrá las imagenes
 overlayList = []
 
 #Recorre la lista de los elementos de una carpeta
 for imPath in myList:
     #Obtiene las imagenes de la carpeta
     image = cv2.imread(f'{folderPath}/{imPath}')
-    #Añade las imagenes a una lista
+    #Añade las imagenes a la lista creada anteriormente
     overlayList.append(image)
 
 
@@ -38,7 +38,7 @@ def main(data_image):
   # Recivimos la imagen que nos manda el WebSocket
   # Convertimos la imagen base64 a matriz de numpy válida para OpenCV
   frame = readb64(data_image)
-
+  # Ponemos la imagen en modo espejo para que sea más intuitivo a la hora de posicionar la mano en la imagen
   frame = cv2.flip(frame,1)
 
   # Obtenemos la altura de la imagen para dibujar la línea que separará la referencia de la mano izquierda y de la derecha
@@ -50,26 +50,36 @@ def main(data_image):
   # Dibujamos la línea
   cv2.line(frame, firstPoint, secondPoint, (255, 255, 255), 2)
 
-  # Usamos el método findHands del módulo HandTrackingModule para obtener los landmarks de la imagen
+  # Usamos el método findHands del módulo HandTrackingModule para generar los landmarks de la imagen
   frame = detector.findHands(frame)
 
-  # Hay que tener en cuenta que findPosition2hand, comprueba primero que haya 2 manos
-  # Landmarks de la primera mano
-  # Obtenemos la posición de cada landmark
-  # Landmarks de la segunda mano
-  # Obtenemos la posición de cada landmark
-  lmList1, lmList2 = detector.findPositionAux(frame, handNo=[0,1], draw=False)
+  # Obtenemos la posición de cada landmark de ambas manos
+  # El método findPosition comprueba que haya una segunda mano, en caso contrario se devolverá un array vacío para la segunda mano
+  detector.findPositionAux(frame, handNo=[0,1], draw=False)
 
   # Detectamos que dedos se encuentran arriba con el método fingersUp del HandTrackingModule
+  # Este método devuelve una lista con dos listas en su interior, de esta manera
+  #   [[izq/derecha, nºDedos levantados de la primera mano][izq/derecha, nºDedos levantados de la segunda mano]]
   hands = detector.fingersUp(mirror=True)
 
+  # Si el tamaño de la lista es es 2, implica que se han detectado 2 manos, esto hay que tenerlo en cuenta a la hora de contar y mostrar el resultado
+  # Esta comprobación será necesaria para no sufrir una excepción "Index out of bounds" al querer acceder a una segunda mano inexistente
   if len(hands) == 2:
-    # Lista con el id de los dedos que se encuentran alzados (0 para abajo) (1 para arriba)
+    # Obtenemos la orientación de la mano mano (hand) y la cantidad de dedos hacia arriba (fingers)
+    #   hand nos indica si es la derecha (R) i la izquierda (L) nos aydará a saber donde dibujar el número en la imagen
+    #   fingers es una lista de 0 y 1, donde el 0 indica que el dedo está abajo y el 1, que el dedo está hacia arriba
+    # 1º mano
     hand1, fingers1 = hands[0]
+    # 2º mano
     hand2, fingers2 = hands[1]
 
+    # Obtenemos la cantidad de números que se encuentran hacia arriba (1)
+    # 1º mano
     totalFingers1 = fingers1.count(1)
+    # 2º mano
     totalFingers2 = fingers2.count(1)
+
+    # Cantidad total de los dedos que se encuentran hacia arriba
     totalFingers = totalFingers1 + totalFingers2
 
     # Si la primera mano es la derecha:
@@ -104,20 +114,22 @@ def main(data_image):
       cv2.rectangle(frame, (int(w/2)-100, h), (int(w/2)+100, h-200), (204, 155, 81), cv2.FILLED)
       cv2.putText(frame, str(totalFingers), (int(w/2)-50, h-50), cv2.FONT_HERSHEY_PLAIN, 10, (255, 255, 255), 15)
 
+  # Si el tamaño de la lista es 1, implica que se han detectado solamente 1 mano
   elif len(hands) == 1:
+    # Obtenemos la orientación de la mano (hand) y la cantidad de dedos hacia arriba (fingers)
     hand, fingers = hands[0]
 
-    # Numeros de 1 que se encuentran en la lista, es decir, números de dedos que se encuentran alzados
+    # Obtenemos la cantidad de números que se encuentran hacia arriba (1)
     totalFingers = fingers.count(1)
 
-    # En cambio, si no existe la variable totalFingers2, implica que solo hay una mano almacenada en el valor totalFingers directamente
     # La suma se representará en el lado correspondiente a la mano (izq, der)
     # Si la mano es la derecha
     if hand == 'R':
       # Dibujamos el rectangulo con la cifra total de números alzados de la mano a la derecha
       cv2.rectangle(frame, (w, 0), (w-200, 200), (204, 155, 81), cv2.FILLED)
       cv2.putText(frame, str(totalFingers), (w-150, 155), cv2.FONT_HERSHEY_PLAIN, 10, (255, 255, 255), 15)
-    else:
+    # Si la mano es la izquierda
+    elif hand == 'L':
       # Dibujamos el rectangulo con la cifra total de números alzados de la mano a la izquierda
       cv2.rectangle(frame, (0, 0), (200, 200), (204, 155, 81), cv2.FILLED)
       cv2.putText(frame, str(totalFingers), (50, 155), cv2.FONT_HERSHEY_PLAIN, 10, (255, 255, 255), 15)
