@@ -14,10 +14,10 @@ m = alsaaudio.Mixer()
 #Crear instancia de la clase HandDetector
 detector = htm.HandDetector()
 
-def main(data_image):
+def main(dataImage):
 	# Recivimos la imagen que nos manda el WebSocket
   # Convertimos la imagen base64 a matriz de numpy válida para OpenCV
-	frame = readb64(data_image)
+	frame = readb64(dataImage)
 
 	# Usamos el método findHands del módulo HandTrackingModule para obtener los landmarks de la imagen
 	frame = detector.findHands(frame)

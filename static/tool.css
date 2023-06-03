@@ -24,6 +24,10 @@ html{
   background-color: #3b4456;
 }
 
+#videoElement{
+  display: none;
+}
+
 div img{
   display: flex;
   flex-direction: column;

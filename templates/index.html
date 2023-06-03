@@ -4,15 +4,16 @@
 <head>
     <meta charset="UTF-8">
     <title>Inicio</title>
-    <link rel="stylesheet" href="../static/index/style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.4/socket.io.js"></script>
     <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700" rel="stylesheet">
     <link rel="stylesheet" href="static/index.css">
+    
+    
 </head>
 
 <body id="body">
   <header>
-    <h1>Esto es el titulo</h1>
+    <h1>Bienvenido {{name}}</h1>
   </header>
   <article id="cards-container">
     <div class="card">
@@ -112,73 +113,6 @@
       </div>
     </div>
   <article>
-
-  <script>
-      const checkLoginApi = async () => {
-          try {
-
-              const resToken = await fetch('http://localhost:3000/api/v1/auth/refresh', {
-                  method: 'GET',
-                  credentials: 'include'
-              })
-
-              const { token } = await resToken.json()
-
-              const res = await fetch('http://localhost:3000/api/v1/auth/protected', {
-                  method: 'GET',
-                  headers: {
-                      'Content-Type': 'application/json',
-                      Authorization: `Bearer ${token}`
-                  }
-              })
-
-              const data = await res.json()
-
-              return data
-
-          } catch (e) {
-
-              console.log(e)
-
-          }
-      }
-
-      checkLoginApi().then(response => {
-          if (response.status === 'bad')
-              document.getElementById('body').innerHTML =
-              `
-                <h1>You are not loggin in</h1>
-                <section class="portfolio-experiment">
-                <a href="http://localhost:5173/">
-                  <span class="text">Get log in for free</span>
-                  <span class="line -right"></span>
-                  <span class="line -top"></span>
-                  <span class="line -left"></span>
-                  <span class="line -bottom"></span>
-                </a>
-              </section>
-              `
-
-          /* else
-              document.getElementById('body').innerHTML = 
-              `
-              <h1>Inicio</h1>
-              <nav>
-                  <ul>
-                      <li><a href="test">Test</a></li>
-                      <hr>
-                      <li><a href="finger">Finger Counting</a></li>
-                      <li><a href="volume">Volume Hand Control</a></li>
-                      <li><a href="painter">Virtual Painter</a></li>
-                      <li><a href="prs">Paper Rock Scissors</a></li>
-                  </ul>
-              </nav>
-              ` */
-
-      });
-
-
-  </script>
 
 </body>
 

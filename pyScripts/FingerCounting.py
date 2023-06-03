@@ -1,5 +1,5 @@
 
-#Imports
+# IMPORTS
 import modules.HandTrackingModule as htm
 import cv2
 import time
@@ -34,10 +34,10 @@ totalFingers = 0
 detector = htm.HandDetector()
 
 # Función que ejecuta la ruta respectiva al fichero, recive una imagen del WebSocket, la procesa, y la devuelve al WebSocket
-def main(data_image):
+def main(dataImage):
   # Recivimos la imagen que nos manda el WebSocket
   # Convertimos la imagen base64 a matriz de numpy válida para OpenCV
-  frame = readb64(data_image)
+  frame = readb64(dataImage)
   # Ponemos la imagen en modo espejo para que sea más intuitivo a la hora de posicionar la mano en la imagen
   frame = cv2.flip(frame,1)
 

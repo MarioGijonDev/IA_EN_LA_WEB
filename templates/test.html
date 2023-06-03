@@ -11,54 +11,67 @@
 <body>
 
     <div id="container">
-        <video autoplay playsinline id="videoElement" style="display: none;"></video>
+        <video autoplay playsinline id="videoElement"></video>
         <canvas id="canvas"  width="1280" height="800"></canvas>
     </div>
 
     <div class = "video">
         <img id="photo"  width="1280"  height="800">
     </div>
-
+    <script src="../static/checkLoginApi.js"></script>
     <script type="text/javascript" charset="utf-8">
+        // Conexión al servidor mediante websocket Socket.io
         const socket = io.connect(window.location.protocol + '//' + document.domain + ':' + location.port);
-
+        // Comprobamos la conexión con el servidor
+        // El evento se ejecutará cuando se haya conectado de manera exitosa
         socket.on('connect', function(){
-            console.log("Connected...!", socket.connected)
+            console.log("Connected...!", socket.connected);
         });
-
+    
+        // Obtenemos los elementos del DOM necesarios
         const canvas = document.getElementById('canvas');
         const context = canvas.getContext('2d');
-        const video = document.querySelector("#videoElement");
-
+        const video = document.getElementById("videoElement");
+        const photo = document.getElementById("photo");
+    
+        // Establecemos el tamaño del elemento de video
         video.width = 1280;
         video.height = 800; 
-
+    
+        // Obtenemos acceso a la cámara del dispositivo
         if (navigator.mediaDevices.getUserMedia) {
             navigator.mediaDevices.getUserMedia({ video: true })
             .then(function (stream) {
+                // Asignamos el stream de la cámara (lo que captura la cámara) al elemento video
                 video.srcObject = stream;
                 video.play();
             })
             .catch(function (e) {
-                console.log(e)
+                console.log(e);
             });
         }
-
+    
+        // Establecemos la frecuencia de actualización de la imagen capturada
         const FPS = 10;
         setInterval(() => {
-            const width=video.width;
-            const height=video.height;
-
-            context.drawImage(video, 0, 0, width , height );
-
-            const data = canvas.toDataURL('image/jpeg', 0.1);
-
-            context.clearRect(0, 0, width,height );
-
+            // Recogemos el ancho y alto del video
+            const width = video.width;
+            const height = video.height;
+            // Dibujamos la imagen del video capturada de la webcam, en el canvas
+            context.drawImage(video, 0, 0, width, height);
+            // Convertir la imagen del canvas a formato base64
+            const data = canvas.toDataURL('image/jpeg', 0.5);
+            // Limpiamos el canvas (para posteriormente dibujar el siguiente frame)
+            context.clearRect(0, 0, width, height);
+            // Enviamos la imagen al servidor mediante emit()
+            // Esta función recive el nombre del canal y la información que queremos enviar
             socket.emit('image-test', data);
         }, 1000/FPS);
-
+    
+        // Evento que se ejecuta cuando se recibe una respuesta del servidor por el canal response_back
+        // Este canal es compartido por todos los canales, para evitar la saturación de canales para el mismo usuario
         socket.on('response_back', function(image){
+            // Mostramos la imagen recibida (y ya procesada) en el elemento de imagen
             photo.setAttribute('src', image );    
         });
     </script>

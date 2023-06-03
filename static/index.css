@@ -86,7 +86,7 @@ p{
   transition: 0.5s;
   animation: gradient_301 5s ease infinite;
   border: double 4px transparent;
-  background-image: linear-gradient(#212121, #212121),  linear-gradient(137.48deg, #ffdb3b 10%,#FE53BB 45%, #8F51EA 67%, #0044ff 87%);
+  background-image: linear-gradient(#212121, #212121),  linear-gradient(137.48deg, #2c92a2 10%,#256974 45%, #1f5081 67%, #0c3d6e 87%);
   background-origin: border-box;
   background-clip: content-box, border-box;
   cursor: pointer;
@@ -127,11 +127,11 @@ strong {
 }
 
 .circle:nth-of-type(1) {
-  background: rgba(254, 83, 186, 0.636);
+  background: rgba(96, 185, 197, 0.798);
 }
 
 .circle:nth-of-type(2) {
-  background: rgba(142, 81, 234, 0.704);
+  background: rgba(75, 138, 187, 0.837);
 }
 
 .btn:hover #container-stars {
@@ -144,14 +144,14 @@ strong {
 }
 
 .btn:active {
-  border: double 4px #FE53BB;
+  border: double 4px #235a87;
   background-origin: border-box;
   background-clip: content-box, border-box;
   animation: none;
 }
 
 .btn:active .circle {
-  background: #FE53BB;
+  background: #235a87;
 }
 
 #stars {

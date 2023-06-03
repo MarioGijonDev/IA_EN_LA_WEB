@@ -1,4 +1,5 @@
-#Imports
+
+# IMPORTS
 from flask import request
 import modules.HandTrackingModule as htm
 import numpy as np
@@ -48,7 +49,7 @@ cleanThickness = 110
 # Obtenemos la instancia de la clase HandDetector
 detector = htm.HandDetector(detectionCon=0.35)
 
-def main(data_image, headerImageColor, lineDrawed):
+def main(dataImage, headerImageColor, lineDrawed):
 
 	# Color del dibujo predeterminado (negro para borrar)
 	drawColor = (255, 0, 255)
@@ -56,9 +57,12 @@ def main(data_image, headerImageColor, lineDrawed):
 	# Obtenemos el color activo que se está usando, se encuentra almacenado en una cookie
 	color = headerImageColor
 
+	# Inicializamos las variables que nos servirán para definir donde dibujar en cada frame
+	xp, yp = 0,0
+
 	# Recivimos la imagen que nos manda el WebSocket
 	# Convertimos la imagen base64 a matriz de numpy válida para OpenCV
-	frame = readb64(data_image)
+	frame = readb64(dataImage)
 
 	# Volteamos la imagen para simular el modo espejo y que sea más intuitivo a la hora de posicionar la mano
 	frame = cv2.flip(frame, 1)
@@ -169,8 +173,8 @@ def main(data_image, headerImageColor, lineDrawed):
 			# Guardamos los valores actuales, para repetir este "bucle", donde se guarda la cordenada actual para que sirve de coordenada anterior a la coordenada siguiente (si, es lioso pero es así)
 			xp, yp = x1, y1
 
-			# Enviamos los nuevos valores al cliente mediante websocket, estos valores se guardaán en la cookie y serán recividos en la siguiente interacción
-		emit('lineDrawed', [xp, yp])
+	# Enviamos los nuevos valores al cliente mediante websocket, estos valores se guardaán en la cookie y serán recividos en la siguiente interacción
+	emit('lineDrawed', [xp, yp])
 
 	# Convertimos el canvas del dibujo en escala de grises donde cada color tendrá un nivel de intensidad de brillo
 	imgGray = cv2.cvtColor(frameC2, cv2.COLOR_BGR2GRAY)

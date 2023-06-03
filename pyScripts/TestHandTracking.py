@@ -10,10 +10,10 @@ from utils.imageFormatting import readb64, encode64
 detector = htm.HandDetector()
 
 # Función que ejecuta la ruta respectiva al fichero, recive una imagen del WebSocket, la procesa, y la devuelve al WebSocket
-def main(data_image):
+def main(dataImage):
   # Recivimos la imagen que nos manda el WebSocket
   # Convertimos la imagen base64 a matriz de numpy válida para OpenCV
-  frame = readb64(data_image)
+  frame = readb64(dataImage)
 
   # Usamos el método findHands del módulo HandTrackingModule para obtener los landmarks de la imagen
   frame = detector.findHands(frame)

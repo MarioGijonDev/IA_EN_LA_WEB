@@ -6,15 +6,13 @@
     <title>Volume control</title>
 
     <link rel="stylesheet" href="static/tool.css">
-    
-     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.4/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.4/socket.io.js"></script>
 </head>
 
 <body>
 
     <div id="container">
-    <video autoplay playsinline id="videoElement" style="display: none;"></video>
+    <video autoplay playsinline id="videoElement"></video>
     <canvas id="canvas"  width="1280" height="720"></canvas>
     </div>
 
@@ -23,50 +21,60 @@
     </div>
     
     <script type="text/javascript" charset="utf-8">
-
-        console.log(window.location.protocol + '//' + document.domain + ':' + location.port);
-      
-        var socket = io.connect(window.location.protocol + '//' + document.domain + ':' + location.port);
-        
+        // Conexión al servidor mediante websocket Socket.io
+        const socket = io.connect(window.location.protocol + '//' + document.domain + ':' + location.port);
+        // Comprobamos la conexión con el servidor
+        // El evento se ejecutará cuando se haya conectado de manera exitosa
         socket.on('connect', function(){
-            console.log("Connected...!", socket.connected)
+            console.log("Connected...!", socket.connected);
         });
-
-
-        var canvas = document.getElementById('canvas');
-        var context = canvas.getContext('2d');
-        const video = document.querySelector("#videoElement");
-
-        video.width = 1280;
-        video.height = 720; 
     
-
+        // Obtenemos los elementos del DOM necesarios
+        const canvas = document.getElementById('canvas');
+        const context = canvas.getContext('2d');
+        const video = document.getElementById("videoElement");
+        const photo = document.getElementById("photo");
+    
+        // Establecemos el tamaño del elemento de video
+        video.width = 1280;
+        video.height = 800; 
+    
+        // Obtenemos acceso a la cámara del dispositivo
         if (navigator.mediaDevices.getUserMedia) {
             navigator.mediaDevices.getUserMedia({ video: true })
             .then(function (stream) {
+                // Asignamos el stream de la cámara (lo que captura la cámara) al elemento video
                 video.srcObject = stream;
                 video.play();
             })
-            .catch(function (err0r) {
-
+            .catch(function (e) {
+                console.log(e);
             });
         }
-
-        const FPS = 8;
+    
+        // Establecemos la frecuencia de actualización de la imagen capturada
+        const FPS = 10;
         setInterval(() => {
-            width=video.width;
-            height=video.height;
-            context.drawImage(video, 0, 0, width , height );
-            const data = canvas.toDataURL('image/jpeg', 0.3);
-            context.clearRect(0, 0, width,height );
-
+            // Recogemos el ancho y alto del video
+            const width = video.width;
+            const height = video.height;
+            // Dibujamos la imagen del video capturada de la webcam, en el canvas
+            context.drawImage(video, 0, 0, width, height);
+            // Convertimos la imagen del canvas a formato base64
+            const data = canvas.toDataURL('image/jpeg', 0.5);
+            // Limpiamos el canvas (para posteriormente dibujar el siguiente frame)
+            context.clearRect(0, 0, width, height);
+            // Enviamos la imagen al servidor mediante emit()
+            // Esta función recive el nombre del canal y la información que queremos enviar
             socket.emit('image-volume', data);
         }, 1000/FPS);
-
+    
+        // Evento que se ejecuta cuando se recibe una respuesta del servidor por el canal response_back
+        // Este canal es compartido por todos los canale, para evitar la saturación de canales para el mismo usuario
         socket.on('response_back', function(image){
+            // Mostramos la imagen recibida (y ya procesada) en el elemento de imagen
             photo.setAttribute('src', image );    
         });
-
     </script>
     
 
