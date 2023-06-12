@@ -3,6 +3,8 @@
 import cv2
 import mediapipe as mp
 
+# ESTE MÓDULO SE HA OBTENIDO DEL CURSO OFICIAL DE FREECODECAMP
+# AUNQUE INCLUYE MEJORAS COMO EL USO DE 2 MANOS EN VEZ DE 1
 #########################
 # HANDS TRACKING MODULE #
 #########################
@@ -56,7 +58,7 @@ class HandDetector():
 		return img
 
 	# Nos devuelve una matriz con el id de cada landmark y su posición x,y respectivamente, de la primera mano
-	def findPositionAux(self, img, handNo = [0], draw = True):
+	def findPosition(self, img, handNo = [0], draw = True):
 		# Creamos una lista (acabará siendo una matriz) que almacenará todos los landmarks de la imagen
 		self.lmList = [[],[]]
 		# Comprobamos que se han detectados landmarks en la imagen

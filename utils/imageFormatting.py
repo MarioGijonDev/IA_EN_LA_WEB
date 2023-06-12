@@ -18,17 +18,22 @@ def readb64(base64_string):
 	img = Image.open(sbuf)
 	# Convertir la imagen PIL a un arreglo numpy y cambiar el espacio de color a RGB
 	# Este espacio de color es el necesario para el tratamiento de imagenes con cv2
-	# Usamos el metodo array de numpy para convertir la instancia de la clase Image, en una imagen en forma de matriz (para poder manipularla con cv2)
+	# Usamos el metodo array de numpy para convertir
+	# 	-> La instancia de la clase Image
+	# 	-> En una imagen en forma de matriz numpy (para poder manipularla con cv2)
 	# Devolvemos la imagen ya codificada en una imagen válida para OpenCV
 	return cv2.cvtColor(np.array(img), cv2.COLOR_BGR2RGB)
 
 def encode64(frame):
-  # Codificamos la imagen a jpeg (de esta manera nos será más sencillo codificarlo a base64) usando el mñetodo b64encode
+  # Codificamos la imagen a jpeg usando el método imencode
   imgencode = cv2.imencode('.jpeg', frame,[cv2.IMWRITE_JPEG_QUALITY,40])[1]
-  # Codificamos a base64
+  # Asignamos el formato base64
   # Usamos el método decode() para asegurarnos que es una cadena (str UTF-8)
   stringData = base64.b64encode(imgencode).decode('utf-8')
   # Añadimos la parte inicial de una URL de datos de imagen en base64
-  # En este caso, la imagen se trata como un archivo JPEG, por lo que se utiliza 'data:image/jpeg;base64,'
+  # La imagen se trata como un archivo JPEG, por lo que se utiliza 'data:image/jpeg;base64,'
   processedImage = 'data:image/jpeg;base64,' + stringData
   return processedImage
+
+
+

@@ -23,7 +23,7 @@ def main(dataImage):
 	frame = detector.findHands(frame)
 
 	# Obtenemos la información de los landmarks (posición en el eje x, y, z en la imagen)
-	lmList, _ = detector.findPositionAux(frame)
+	lmList, _ = detector.findPosition(frame)
 
 	# Comprobamos que se han encontrado landmarks en la imagen (en caso contrario, no podríamos operar con ellos)
 	if len(lmList) != 0:

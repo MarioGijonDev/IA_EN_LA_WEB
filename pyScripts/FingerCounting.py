@@ -10,6 +10,8 @@ import numpy as np
 from flask_socketio import emit
 from utils.imageFormatting import readb64, encode64
 
+"""
+COMENTAMOS ESTO, POR SI SE QUIERE USAR IMÁGENES EN VEZ DE NÚMEROS
 #Ruta de la carpeta de imagenes
 folderPath = "img/FingerImages"
 
@@ -21,10 +23,11 @@ overlayList = []
 
 #Recorre la lista de los elementos de una carpeta
 for imPath in myList:
-    #Obtiene las imagenes de la carpeta
-    image = cv2.imread(f'{folderPath}/{imPath}')
-    #Añade las imagenes a la lista creada anteriormente
-    overlayList.append(image)
+  #Obtiene las imagenes de la carpeta
+  image = cv2.imread(f'{folderPath}/{imPath}')
+  #Añade las imagenes a la lista creada anteriormente
+  overlayList.append(image)
+"""
 
 
 #Almacenará el numero de dedos levantados
@@ -52,11 +55,9 @@ def main(dataImage):
 
   # Usamos el método findHands del módulo HandTrackingModule para generar los landmarks de la imagen
   frame = detector.findHands(frame)
-
   # Obtenemos la posición de cada landmark de ambas manos
   # El método findPosition comprueba que haya una segunda mano, en caso contrario se devolverá un array vacío para la segunda mano
-  detector.findPositionAux(frame, handNo=[0,1], draw=False)
-
+  detector.findPosition(frame, handNo=[0,1], draw=False)
   # Detectamos que dedos se encuentran arriba con el método fingersUp del HandTrackingModule
   # Este método devuelve una lista con dos listas en su interior, de esta manera
   #   [[izq/derecha, nºDedos levantados de la primera mano][izq/derecha, nºDedos levantados de la segunda mano]]

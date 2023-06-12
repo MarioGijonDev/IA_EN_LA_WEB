@@ -72,7 +72,7 @@ def main(dataImage, headerImageColor, lineDrawed):
 
 	# Obtenemos la posición de cada landmark de ambas manos
 	# Despreciamos el valor de una segunda mano, ya que esta herramienta se aplica solamente a una
-	lmList, _ = detector.findPositionAux(frame, draw=False)
+	lmList, _ = detector.findPosition(frame, draw=False)
 
 	# En caso de que se haya detectado los landmarks de la mano
 	if len(lmList) != 0 :
