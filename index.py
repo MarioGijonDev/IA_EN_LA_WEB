@@ -10,11 +10,13 @@ import pyScripts.VirtualPainter as vp
 
 # Creamos la app de Flask
 app = Flask(__name__)
+
+# Asignamos una secret_key para hacer uso de las sesiones
+app.secret_key = 'asdcvbert324$$asd'
+
 # Creamos la instancia del Socket.IO para la conexión concurrente entre cliente y servidor
 # Aceptamos todos los dominios
 socketio = SocketIO(app,cors_allowed_origins='*')
-
-app.secret_key = 'asdcvbert324$$asd'
 
 # Decorador para verificar si el usuario está autenticado
 def loginRequired(f):
@@ -51,8 +53,7 @@ def loginRequired(f):
 	@wraps(f)
 	# Esta función es la que se ejecutará "antes" de la función que se define tras usar el decorador
 	# Con esto, Conseguimos que se reemplace momentaneamente la función original, por el contenido de la función decorada
-	# Si la ejecución del decorador llega hasta el final, devolvemos la función original
-	# esto implica ejecutar el código que fué reemplazado
+	# Si la ejecución del decorador llega hasta el final, devolvemos la función original, esto implica ejecutar el código que fué reemplazado
 	# Sencillamente, hacemos un reemplazo momentaneo del código, y si todo va bien, volvemos a reemplazarlo por el original
 	# *args permite pasar un número variable de argumentos posicionales como array a una función. 
 	# **kwargs permite pasar un número variable de argumentos clave-valor como diccionario
@@ -67,9 +68,10 @@ def loginRequired(f):
 		# Ejecutamos la función original con los argumentos y palabras clave que preservamos anteriormente
 		return f(*args, **kwargs)
 	
-	# Devolvemos la función decorada para que pueda ser ejecutada en las demñás funciones
-	# de lo contrario, solo se ejecutará una vez
+	# Devolvemos la función decorada para que pueda ser ejecutada en las demñás funciones, de lo contrario, solo se ejecutará una vez
 	return decoratedFunction
+
+
 
 # Índice ##############################################
 # Definimos la ruta raiz
